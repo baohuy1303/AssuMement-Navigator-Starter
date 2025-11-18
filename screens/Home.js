@@ -21,13 +21,14 @@ export default function Home({ navigation }) {
   const [query, setQuery] = useState('');
   const [stops, setStops] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
-  const [selectedPOIs, setSelectedPOIs] = useState([]);
+  const [selectedPOI, setSelectedPOI] = useState(null);
 
   const filtered = SAMPLE_POIS.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
 
   function addStop(poi) {
     setStops(prev => [...prev, poi]);
     setQuery('');
+    setSelectedPOI(null);
   }
 
   function removeStop(index) {
@@ -50,6 +51,11 @@ export default function Home({ navigation }) {
     );
   }
 
+  function togglePOI(poi) {
+    if (selectedPOI?.name === poi.name) setSelectedPOI(null);
+    else setSelectedPOI(poi);
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Where to?</Text>
@@ -70,15 +76,13 @@ export default function Home({ navigation }) {
 
       <View style={styles.row}>
         {SAMPLE_POIS.filter(p => selectedTypes.some(t => t.label === p.type && t.pressed)).map(p => (
-          <View key={p.id} style={styles.chip}><Text>{p.name}</Text></View>
+          <View key={p.id} style={[styles.chip, selectedPOI?.name === p.name && styles.selectedChip]}><Text onPress={() => togglePOI(p)} 
+            style={selectedPOI?.name === p.name && styles.selectedTxt}>{p.name}</Text></View>
         ))}
       </View>
 
-      <TouchableOpacity style={styles.addBtn} onPress={() => {
-        if (filtered[0]) addStop(filtered[0]);
-        else Alert.alert('Type to search, then tap Start to see a demo.');
-      }}>
-        <Text style={styles.addTxt}>Add stop</Text>
+      <TouchableOpacity style={[styles.addBtn, !selectedPOI && styles.disabledBtn]} onPress={() => selectedPOI && addStop(selectedPOI)}>
+        <Text style={[styles.addTxt]}>{selectedPOI ? 'Add stop' : 'Select a POI to add'}</Text>
       </TouchableOpacity>
 
       <Text style={styles.subtitle}>Your stops</Text>
@@ -116,4 +120,5 @@ const styles = StyleSheet.create({
   startTxt: { color: 'white', fontSize: 16, fontWeight: '600' },
   selectedChip: { backgroundColor: '#0d6efd' },
   selectedTxt: { color: 'white' },
+  disabledBtn: { backgroundColor: '#ccc' },
 });
