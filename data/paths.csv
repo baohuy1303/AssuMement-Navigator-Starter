@@ -1,0 +1,6 @@
+from_id,to_id,distance_m,accessible
+ride_wheel,ride_train,120,true
+ride_train,food_pizza,140,true
+food_pizza,rest_a,90,true
+rest_a,exit_main,150,true
+ride_wheel,rest_a,300,false

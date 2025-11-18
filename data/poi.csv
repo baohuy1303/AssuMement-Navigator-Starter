@@ -1,0 +1,6 @@
+id,name,type,lat,lng,accessible
+ride_wheel,The Wheel,ride,40.12345,-92.12340,true
+ride_train,Little Train,ride,40.12410,-92.12390,true
+food_pizza,Pizza Place,food,40.12380,-92.12410,true
+rest_a,Restroom A,restroom,40.12310,-92.12300,true
+exit_main,Main Exit,exit,40.12250,-92.12350,true
