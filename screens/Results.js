@@ -1,67 +1,85 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 
 export default function Results({ navigation, route }) {
-  const { stops = [] } = route.params || {};
-  const [orderMode, setOrderMode] = useState('my'); // 'my' | 'best'
-  const [accessibleOnly, setAccessibleOnly] = useState(false);
+    const { stops = [] } = route.params || {};
+    const [orderMode, setOrderMode] = useState('my'); // 'my' | 'best'
+    const [accessibleOnly, setAccessibleOnly] = useState(false);
 
-  const totalLegs = Math.max(0, stops.length - 1);
+    const totalLegs = Math.max(0, stops.length - 1);
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Route overview</Text>
+    return (
+        <ScrollView className="bg-white">
+            <View className="p-4">
+                <Text className="text-xl font-semibold mb-3">
+                    Route overview
+                </Text>
 
-      <View style={styles.card}>
-        <Text style={styles.line}>Stops: {stops.length}</Text>
-        <Text style={styles.line}>Legs: {totalLegs}</Text>
-        <Text style={styles.line}>Order: {orderMode === 'my' ? 'My Order' : 'Best Order'}</Text>
-        <Text style={styles.line}>Accessible only: {accessibleOnly ? 'Yes' : 'No'}</Text>
-      </View>
+                <View className="p-3 rounded-xl border border-gray-200 bg-gray-50 mb-3">
+                    <Text className="text-base mb-1">
+                        Stops: {stops.length}
+                    </Text>
+                    <Text className="text-base mb-1">Legs: {totalLegs}</Text>
+                    <Text className="text-base mb-1">
+                        Order: {orderMode === 'my' ? 'My Order' : 'Best Order'}
+                    </Text>
+                    <Text className="text-base mb-1">
+                        Accessible only: {accessibleOnly ? 'Yes' : 'No'}
+                    </Text>
+                </View>
 
-      <View style={styles.mapPlaceholder}>
-        <Text style={styles.mapText}>Map placeholder (Week 3)</Text>
-      </View>
+                <View className="h-60 rounded-2xl bg-slate-100 items-center justify-center mb-3 border border-slate-200">
+                    <Text className="text-slate-500">
+                        Map placeholder (Week 3)
+                    </Text>
+                </View>
 
-      <View style={styles.row}>
-        <TouchableOpacity style={styles.toggle} onPress={() => setOrderMode(orderMode === 'my' ? 'best' : 'my')}>
-          <Text>Order: {orderMode === 'my' ? 'My Order' : 'Best Order'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.toggle} onPress={() => setAccessibleOnly(!accessibleOnly)}>
-          <Text>Accessible only: {accessibleOnly ? 'On' : 'Off'}</Text>
-        </TouchableOpacity>
-      </View>
+                <View className="flex-row gap-3 mb-3">
+                    <TouchableOpacity
+                        className="flex-1 p-3 rounded-xl border border-gray-300 items-center"
+                        onPress={() =>
+                            setOrderMode(orderMode === 'my' ? 'best' : 'my')
+                        }
+                    >
+                        <Text>
+                            Order:{' '}
+                            {orderMode === 'my' ? 'My Order' : 'Best Order'}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        className="flex-1 p-3 rounded-xl border border-gray-300 items-center"
+                        onPress={() => setAccessibleOnly(!accessibleOnly)}
+                    >
+                        <Text>
+                            Accessible only: {accessibleOnly ? 'On' : 'Off'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
-      <TouchableOpacity style={styles.startBtn} onPress={() => navigation.navigate('Guide', { stops })}>
-        <Text style={styles.startTxt}>Start</Text>
-      </TouchableOpacity>
+                <TouchableOpacity
+                    className="bg-blue-600 py-3.5 rounded-xl items-center mb-3"
+                    onPress={() => navigation.navigate('Guide', { stops })}
+                >
+                    <Text className="text-white text-base font-semibold">
+                        Start
+                    </Text>
+                </TouchableOpacity>
 
-      <Text style={styles.subtitle}>Legs</Text>
-      {stops.map((s, i) => (
-        i < stops.length - 1 ? (
-          <View style={styles.leg} key={i}>
-            <Text style={styles.legTxt}>
-              {i + 1}. {s.name} → {stops[i + 1].name}
-            </Text>
-          </View>
-        ) : null
-      ))}
-    </ScrollView>
-  );
+                <Text className="text-lg font-semibold mb-2">Legs</Text>
+                {stops.map((s, i) =>
+                    i < stops.length - 1 ? (
+                        <View
+                            className="p-2.5 rounded-lg border border-gray-200 mb-2"
+                            key={i}
+                        >
+                            <Text className="text-base">
+                                {i + 1}. {s.name} → {stops[i + 1].name}
+                            </Text>
+                        </View>
+                    ) : null
+                )}
+            </View>
+        </ScrollView>
+    );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: 'white' },
-  title: { fontSize: 22, fontWeight: '600', marginBottom: 12 },
-  card: { padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#eee', backgroundColor: '#fafafa', marginBottom: 12 },
-  line: { fontSize: 16, marginBottom: 4 },
-  mapPlaceholder: { height: 240, borderRadius: 16, backgroundColor: '#f1f5f9', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#e2e8f0' },
-  mapText: { color: '#64748b' },
-  row: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  toggle: { flex: 1, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#ddd', alignItems: 'center' },
-  startBtn: { backgroundColor: '#0d6efd', padding: 14, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
-  startTxt: { color: 'white', fontSize: 16, fontWeight: '600' },
-  subtitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  leg: { padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#eee', marginBottom: 8 },
-  legTxt: { fontSize: 16 }
-});

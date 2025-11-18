@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    FlatList,
+    Alert,
+} from 'react-native';
 import StopItem from '../components/StopItem';
 
 const SAMPLE_POIS = [
@@ -57,68 +64,104 @@ export default function Home({ navigation }) {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Where to?</Text>
-      <TextInput
-        style={styles.input}
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Find a ride, food, restroom…"
-      />
-
-      <View style={styles.row}>
-        {TYPES.map(label => (
-          <View key={label.id} style={[styles.chip, selectedTypes.some(t => t.label === label.id && t.pressed) && styles.selectedChip]}>
-            <Text onPress={() => toggleType(label.id)}
-              style={selectedTypes.some(t => t.label === label.id && t.pressed) && styles.selectedTxt}>{label.name}</Text></View>
-        ))}
-      </View>
-
-      <View style={styles.row}>
-        {SAMPLE_POIS.filter(p => selectedTypes.some(t => t.label === p.type && t.pressed)).map(p => (
-          <View key={p.id} style={[styles.chip, selectedPOI?.name === p.name && styles.selectedChip]}><Text onPress={() => togglePOI(p)} 
-            style={selectedPOI?.name === p.name && styles.selectedTxt}>{p.name}</Text></View>
-        ))}
-      </View>
-
-      <TouchableOpacity style={[styles.addBtn, !selectedPOI && styles.disabledBtn]} onPress={() => selectedPOI && addStop(selectedPOI)}>
-        <Text style={[styles.addTxt]}>{selectedPOI ? 'Add stop' : 'Select a POI to add'}</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.subtitle}>Your stops</Text>
-      <FlatList
-        data={stops}
-        keyExtractor={(_, i) => String(i)}
-        renderItem={({ item, index }) => (
-          <StopItem
-            name={`${index + 1}. ${item.name}`}
-            onRemove={() => removeStop(index)}
+      <View className="flex-1 p-4 bg-white">
+          <Text className="text-2xl font-semibold mb-2">Where to?</Text>
+          <TextInput
+              className="border border-gray-300 rounded-xl p-3 mb-2"
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Find a ride, food, restroom…"
           />
-        )}
-        ListEmptyComponent={<Text style={{color:'#777'}}>No stops yet. Search above and tap "Add stop".</Text>}
-      />
 
-      <TouchableOpacity style={styles.startBtn} onPress={onStart}>
-        <Text style={styles.startTxt}>See route</Text>
-      </TouchableOpacity>
-    </View>
+          <View className="flex-row gap-2 mb-3 flex-wrap">
+              {TYPES.map((label) => (
+                  <View
+                      key={label.id}
+                      className={`py-2 px-3 rounded-2xl ${
+                          selectedTypes.some(
+                              (t) => t.label === label.id && t.pressed
+                          )
+                              ? 'bg-blue-600'
+                              : 'bg-gray-100'
+                      }`}
+                  >
+                      <Text
+                          onPress={() => toggleType(label.id)}
+                          className={
+                              selectedTypes.some(
+                                  (t) => t.label === label.id && t.pressed
+                              )
+                                  ? 'text-white'
+                                  : ''
+                          }
+                      >
+                          {label.name}
+                      </Text>
+                  </View>
+              ))}
+          </View>
+
+          <View className="flex-row gap-2 mb-3 flex-wrap">
+              {SAMPLE_POIS.filter((p) =>
+                  selectedTypes.some((t) => t.label === p.type && t.pressed)
+              ).map((p) => (
+                  <View
+                      key={p.id}
+                      className={`py-2 px-3 rounded-2xl ${
+                          selectedPOI?.name === p.name
+                              ? 'bg-blue-600'
+                              : 'bg-gray-100'
+                      }`}
+                  >
+                      <Text
+                          onPress={() => togglePOI(p)}
+                          className={
+                              selectedPOI?.name === p.name ? 'text-white' : ''
+                          }
+                      >
+                          {p.name}
+                      </Text>
+                  </View>
+              ))}
+          </View>
+
+          <TouchableOpacity
+              className={`py-3.5 rounded-xl items-center mb-3 ${
+                  !selectedPOI ? 'bg-gray-400' : 'bg-black'
+              }`}
+              onPress={() => selectedPOI && addStop(selectedPOI)}
+          >
+              <Text className="text-white text-base font-semibold">
+                  {selectedPOI ? 'Add stop' : 'Select a POI to add'}
+              </Text>
+          </TouchableOpacity>
+
+          <Text className="text-lg font-semibold mb-2">Your stops</Text>
+          <FlatList
+              data={stops}
+              keyExtractor={(_, i) => String(i)}
+              renderItem={({ item, index }) => (
+                  <StopItem
+                      name={`${index + 1}. ${item.name}`}
+                      onRemove={() => removeStop(index)}
+                  />
+              )}
+              ListEmptyComponent={
+                  <Text className="text-gray-500">
+                      No stops yet. Search above and tap "Add stop".
+                  </Text>
+              }
+          />
+
+          <TouchableOpacity
+              className="bg-blue-600 py-3.5 rounded-xl items-center mt-3"
+              onPress={onStart}
+          >
+              <Text className="text-white text-base font-semibold">
+                  See route
+              </Text>
+          </TouchableOpacity>
+      </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: 'white' },
-  title: { fontSize: 24, fontWeight: '600', marginBottom: 8 },
-  input: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 12, marginBottom: 8
-  },
-  row: { flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' },
-  chip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 16, backgroundColor: '#f2f2f2' },
-  addBtn: { backgroundColor: '#111', padding: 14, borderRadius: 12, alignItems: 'center', marginBottom: 12 },
-  addTxt: { color: 'white', fontSize: 16, fontWeight: '600' },
-  subtitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  startBtn: { backgroundColor: '#0d6efd', padding: 14, borderRadius: 12, alignItems: 'center', marginTop: 12 },
-  startTxt: { color: 'white', fontSize: 16, fontWeight: '600' },
-  selectedChip: { backgroundColor: '#0d6efd' },
-  selectedTxt: { color: 'white' },
-  disabledBtn: { backgroundColor: '#ccc' },
-});
