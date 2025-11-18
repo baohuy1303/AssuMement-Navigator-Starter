@@ -50,12 +50,14 @@ export default function Home({ navigation }) {
     navigation.navigate('Results', { stops });
   }
 
-  function toggleType(type) {
-    setSelectedTypes(
-      selectedTypes.some(t => t.label === type && t.pressed) ? // check if type is already selected
-      selectedTypes.filter(t => t.label !== type) : //remove selection
-      [...selectedTypes, {label: type, pressed: !selectedTypes.some(t => t.label === type && t.pressed)}] // add selection
-    );
+  function toggleType(typeID) {
+    const isSelected = selectedTypes.some(t => t === typeID);
+    if(isSelected){
+      setSelectedTypes(prev => prev.filter(t => t !== typeID));
+      setSelectedPOI(null);
+    }else{
+      setSelectedTypes(prev => [...prev, typeID])
+    }
   }
 
   function togglePOI(poi) {
@@ -73,23 +75,23 @@ export default function Home({ navigation }) {
               placeholder="Find a ride, food, restroom…"
           />
 
-          <View className="flex-row gap-2 mb-3 flex-wrap">
+          <View className="flex-row gap-4 mb-3 flex-wrap">
               {TYPES.map((label) => (
                   <View
                       key={label.id}
-                      className={`py-2 px-3 rounded-2xl ${
-                          selectedTypes.some(
-                              (t) => t.label === label.id && t.pressed
-                          )
-                              ? 'bg-blue-600'
-                              : 'bg-gray-100'
+                      className={`py-2 px-3 rounded-2xl shadow-md border border-gray-400/50 
+                        hover:scale-105 transition-all duration-200
+                        ${
+                          selectedTypes?.some((t) => t === label.id)
+                              ? 'bg-blue-600 shadow-blue-600/30 scale-105'
+                              : 'bg-gray-100 shadow-gray-100/20'
                       }`}
                   >
                       <Text
                           onPress={() => toggleType(label.id)}
                           className={
-                              selectedTypes.some(
-                                  (t) => t.label === label.id && t.pressed
+                              selectedTypes?.some(
+                                  (t) => t === label.id
                               )
                                   ? 'text-white'
                                   : ''
@@ -103,14 +105,15 @@ export default function Home({ navigation }) {
 
           <View className="flex-row gap-2 mb-3 flex-wrap">
               {SAMPLE_POIS.filter((p) =>
-                  selectedTypes.some((t) => t.label === p.type && t.pressed)
+                  selectedTypes?.some((t) => t === p.type)
               ).map((p) => (
                   <View
                       key={p.id}
-                      className={`py-2 px-3 rounded-2xl ${
+                      className={`py-2 px-3 rounded-2xl border border-gray-400/50 shadow-md
+                        hover:scale-105 transition-all duration-200 ${
                           selectedPOI?.name === p.name
-                              ? 'bg-blue-600'
-                              : 'bg-gray-100'
+                              ? 'bg-blue-600 shadow-blue-600/30 scale-105'
+                              : 'bg-gray-100 shadow-gray-100/20'
                       }`}
                   >
                       <Text
@@ -126,7 +129,7 @@ export default function Home({ navigation }) {
           </View>
 
           <TouchableOpacity
-              className={`py-3.5 rounded-xl items-center mb-3 ${
+              className={`py-3.5 rounded-xl items-center mb-3 border border-gray-300 shadow-md ${
                   !selectedPOI ? 'bg-gray-400' : 'bg-black'
               }`}
               onPress={() => selectedPOI && addStop(selectedPOI)}
@@ -154,7 +157,8 @@ export default function Home({ navigation }) {
           />
 
           <TouchableOpacity
-              className="bg-blue-600 py-3.5 rounded-xl items-center mt-3"
+              className="bg-blue-600 py-3.5 rounded-xl items-center mt-3 border border-gray-300 shadow-md
+              shadow-blue-600/20"
               onPress={onStart}
           >
               <Text className="text-white text-base font-semibold">
