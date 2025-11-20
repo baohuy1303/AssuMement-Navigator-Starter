@@ -6,8 +6,11 @@ import {
     TouchableOpacity,
     FlatList,
     Alert,
+    StyleSheet
 } from 'react-native';
 import StopItem from '../components/StopItem';
+import MapView from 'react-native-maps';
+import { PROVIDER_GOOGLE } from 'react-native-maps';
 
 const SAMPLE_POIS = [
   { id: 'ride_wheel', name: 'The Wheel', type: 'ride' },
@@ -80,28 +83,29 @@ export default function Home({ navigation }) {
                   <View
                       key={label.id}
                       className={`py-2 px-3 rounded-2xl shadow-md border border-gray-400/50 
-                        hover:scale-105 transition-all duration-200
+                       
                         ${
                           selectedTypes?.some((t) => t === label.id)
-                              ? 'bg-blue-600 shadow-blue-600/30 scale-105'
+                              ? 'bg-blue-600 shadow-blue-600/30'
                               : 'bg-gray-100 shadow-gray-100/20'
                       }`}
                   >
                       <Text
                           onPress={() => toggleType(label.id)}
-                          className={
-                              selectedTypes?.some(
+                          className={`will-change-variable
+                              ${selectedTypes?.some(
                                   (t) => t === label.id
                               )
                                   ? 'text-white'
                                   : ''
-                          }
+                          }`}
                       >
                           {label.name}
                       </Text>
                   </View>
               ))}
           </View>
+                
 
           <View className="flex-row gap-2 mb-3 flex-wrap">
               {SAMPLE_POIS.filter((p) =>
@@ -109,18 +113,19 @@ export default function Home({ navigation }) {
               ).map((p) => (
                   <View
                       key={p.id}
-                      className={`py-2 px-3 rounded-2xl border border-gray-400/50 shadow-md
-                        hover:scale-105 transition-all duration-200 ${
+                      className={`will-change-variable py-2 px-3 rounded-2xl border border-gray-400/50 shadow-md
+                        
+                        ${
                           selectedPOI?.name === p.name
-                              ? 'bg-blue-600 shadow-blue-600/30 scale-105'
+                              ? 'bg-blue-600 shadow-blue-600/30'
                               : 'bg-gray-100 shadow-gray-100/20'
                       }`}
                   >
                       <Text
                           onPress={() => togglePOI(p)}
-                          className={
-                              selectedPOI?.name === p.name ? 'text-white' : ''
-                          }
+                          className={`will-change-variable
+                              ${selectedPOI?.name === p.name ? 'text-white' : ''}
+                          `}
                       >
                           {p.name}
                       </Text>
@@ -129,7 +134,7 @@ export default function Home({ navigation }) {
           </View>
 
           <TouchableOpacity
-              className={`py-3.5 rounded-xl items-center mb-3 border border-gray-300 shadow-md ${
+              className={`will-change-variable py-3.5 rounded-xl items-center mb-3 border border-gray-300 shadow-md ${
                   !selectedPOI ? 'bg-gray-400' : 'bg-black'
               }`}
               onPress={() => selectedPOI && addStop(selectedPOI)}
@@ -139,7 +144,14 @@ export default function Home({ navigation }) {
               </Text>
           </TouchableOpacity>
 
+          <View className="flex-1">
+        <MapView style={{ width: '100%', height: '100%' }} 
+        showsUserLocation
+        />
+        </View>
+
           <Text className="text-lg font-semibold mb-2">Your stops</Text>
+          
           <FlatList
               data={stops}
               keyExtractor={(_, i) => String(i)}
@@ -155,6 +167,8 @@ export default function Home({ navigation }) {
                   </Text>
               }
           />
+            
+          
 
           <TouchableOpacity
               className="bg-blue-600 py-3.5 rounded-xl items-center mt-3 border border-gray-300 shadow-md
@@ -168,4 +182,3 @@ export default function Home({ navigation }) {
       </View>
   );
 }
-
