@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,29 +8,40 @@ import {
     Alert
 } from 'react-native';
 import StopItem from '../components/StopItem';
-import MapView from 'react-native-maps';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import { PROVIDER_GOOGLE } from 'react-native-maps';
-
-const SAMPLE_POIS = [
-  { id: 'ride_wheel', name: 'The Wheel', type: 'ride' },
-  { id: 'ride_train', name: 'Little Train', type: 'ride' },
-  { id: 'food_pizza', name: 'Pizza Place', type: 'food' },
-  { id: 'rest_a', name: 'Restroom A', type: 'restroom' },
-  { id: 'exit_main', name: 'Main Exit', type: 'exit' },
-];
-
-const TYPES = [
-  { id: 'ride', name: 'Rides' },
-  { id: 'food', name: 'Food' },
-  { id: 'restroom', name: 'Restrooms' },
-  { id: 'exit', name: 'Exits' },
-];
+import { POIS, TYPES } from '../components/StopData';
+import * as Location from 'expo-location';
 
 export default function OverlapMap({ navigation }) {
   const [query, setQuery] = useState('');
   const [stops, setStops] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedPOI, setSelectedPOI] = useState(null);
+  const [location, setLocation] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const userLocation = async () =>{
+    setLoading(true);
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission to access location was denied');
+      return;
+    }
+    let location = await Location.getCurrentPositionAsync({enableHighAccuracy: true});
+    console.log(location);
+    setLocation({
+        latitude: location.coords.latitude,         
+        longitude: location.coords.longitude,       
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+    });
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    userLocation();
+  }, []);
 
   function addStop(poi) {
     setStops(prev => [...prev, poi]);
@@ -50,7 +61,7 @@ export default function OverlapMap({ navigation }) {
     navigation.navigate('Results', { stops });
   }
 
-  function toggleType(typeID) {
+/*   function toggleType(typeID) {
     const isSelected = selectedTypes.some(t => t === typeID);
     if(isSelected){
       setSelectedTypes(prev => prev.filter(t => t !== typeID));
@@ -58,39 +69,58 @@ export default function OverlapMap({ navigation }) {
     }else{
       setSelectedTypes(prev => [...prev, typeID])
     }
-  }
+  } */
 
   function togglePOI(poi) {
-    if (selectedPOI?.name === poi.name) setSelectedPOI(null);
+    const isSelected = selectedPOI?.name === poi.name;
+    if (isSelected) setSelectedPOI(null);
     else setSelectedPOI(poi);
   }
 
   return (
       <View className="flex-1">
-          <MapView 
+        {
+            loading ? (
+                <View className="flex-1 items-center justify-center">
+                    <Text>Loading...</Text>
+                </View>
+            ) : (
+                <MapView 
               style={{ width: '100%', height: '100%' }} 
+              initialRegion={location}
               showsUserLocation
               showsMyLocationButton
               showsPointsOfInterest
-              followsUserLocation={true}
-              showsCompass
               showsScale
-          />
-          
+              
+          >
+            {POIS.map((poi) => (
+                <Marker
+                    key={poi.id}
+                    coordinate={{ latitude: poi.latitude, longitude: poi.longitude }}
+                    title={poi.name}
+                    onPress={() => togglePOI(poi)}
+                >
+                
+                </Marker>
+            ))}
+            </MapView>
+            )
+        }          
           {/* Top Section - Search and Filters */}
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 48, paddingHorizontal: 16, paddingBottom: 16 }}>
-              <View className="bg-white/95 rounded-2xl p-4 mb-3 shadow-lg border border-gray-200/50">
+              <View className="bg-white/70 rounded-2xl p-4 mb-3 shadow-lg border border-gray-200/50">
                   <Text className="text-2xl font-semibold mb-3 text-gray-900">Where to?</Text>
-                  <TextInput
+                  {/* <TextInput
                       className="bg-white border border-gray-300 rounded-xl p-3 mb-3 text-base"
                       value={query}
                       onChangeText={setQuery}
                       placeholder="Find a ride, food, restroom…"
                       placeholderTextColor="#9CA3AF"
-                  />
+                  /> */}
 
                   {/* Type Filters */}
-                  <View className="flex-row gap-2 mb-3 flex-wrap">
+                 {/*  <View className="flex-row gap-2 mb-3 flex-wrap">
                       {TYPES.map((label) => (
                           <TouchableOpacity
                               key={label.id}
@@ -112,12 +142,12 @@ export default function OverlapMap({ navigation }) {
                               </Text>
                           </TouchableOpacity>
                       ))}
-                  </View>
+                  </View> */}
 
-                  {/* POI Selection */}
+                  {/* POI Selection */}{/* 
                   {selectedTypes.length > 0 && (
                       <View className="flex-row gap-2 mb-3 flex-wrap">
-                          {SAMPLE_POIS.filter((p) =>
+                          {POIS.filter((p) =>
                               selectedTypes?.some((t) => t === p.type)
                           ).map((p) => (
                               <TouchableOpacity
@@ -139,7 +169,7 @@ export default function OverlapMap({ navigation }) {
                               </TouchableOpacity>
                           ))}
                       </View>
-                  )}
+                  )} */}
 
                   {/* Add Stop Button */}
                   <TouchableOpacity
@@ -162,7 +192,7 @@ export default function OverlapMap({ navigation }) {
 
           {/* Bottom Section - Stops List and Action */}
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 32, paddingHorizontal: 16, paddingTop: 16 }}>
-              <View className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200/50" >
+              <View className="bg-white/70 rounded-2xl p-4 shadow-lg border border-gray-200/50" >
                   <Text className="text-lg font-semibold mb-3 text-gray-900">Your stops</Text>
                   
                   <FlatList
@@ -176,11 +206,11 @@ export default function OverlapMap({ navigation }) {
                       )}
                       ListEmptyComponent={
                           <Text className="text-gray-500 text-sm py-4">
-                              No stops yet. Search above and tap "Add stop".
+                              No stops yet. Pick a marker and add a stop.
                           </Text>
                       }
                       showsVerticalScrollIndicator={true}
-                      style={{ maxHeight: 180 }}
+                      style={{ maxHeight: 130 }}
                   />
 
                   <TouchableOpacity
