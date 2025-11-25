@@ -13,6 +13,8 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import { PROVIDER_GOOGLE } from 'react-native-maps';
 import { POIS, TYPES } from '../components/StopData';
 import * as Location from 'expo-location';
+import MapViewDirections from 'react-native-maps-directions';
+import {EXPO_PUBLIC_API_GOOGLE_MAPS} from '@env';
 
 export default function OverlapMap({ navigation }) {
     const [query, setQuery] = useState('');
@@ -22,6 +24,9 @@ export default function OverlapMap({ navigation }) {
     const [loading, setLoading] = useState(false);
     const [customStop, setCustomStop] = useState([]);
     const [turnOnCustom, setTurnOnCustom] = useState(false);
+    const [needsRecalculate, setNeedsRecalculate] = useState(false);
+    const [loadingCustom, setLoadingCustom] = useState(false);
+
 
     const userLocation = async () => {
         setLoading(true);
@@ -47,25 +52,30 @@ export default function OverlapMap({ navigation }) {
     }, []);
 
     function addStop(poi) {
+        setLoading(true);
         setStops((prev) => [...prev, poi]);
         setQuery('');
         setSelectedPOI(null);
+        setLoading(false);
     }
 
     function removeStop(index) {
+        setLoading(true);
         setStops((prev) => prev.filter((_, i) => i !== index));
         if (index === customStop) {
             setCustomStop(null);
         }
+        setLoading(false);
     }
 
     function removeCustomStop(stop) {
-        console.log(stop);
+        setLoading(true);
         setCustomStop((prev) => prev.filter((s) => s.id !== stop.id));
         if (stops.some((s) => s.id === stop.id)) {
             setStops((prev) => prev.filter((s) => s.id !== stop.id));
         }
         setSelectedPOI(null);
+        setLoading(false);
     }
 
     function onStart() {
@@ -73,7 +83,9 @@ export default function OverlapMap({ navigation }) {
             Alert.alert('Add at least two stops to continue.');
             return;
         }
+        setLoading(true);
         navigation.navigate('Results', { stops });
+        setLoading(false);
     }
 
     /*   function toggleType(typeID) {
@@ -87,9 +99,7 @@ export default function OverlapMap({ navigation }) {
   } */
 
     function togglePOI(poi) {
-        const isSelected = selectedPOI?.name === poi.name;
-        if (isSelected) setSelectedPOI(null);
-        else setSelectedPOI(poi);
+        setSelectedPOI(poi);
     }
 
     return (
@@ -100,37 +110,51 @@ export default function OverlapMap({ navigation }) {
                 </View>
             ) : (
                 <MapView
+
                     style={{ width: '100%', height: '100%' }}
                     initialRegion={location}
                     showsUserLocation
                     showsMyLocationButton
                     showsPointsOfInterest
                     showsScale
-                    /* provider={PROVIDER_GOOGLE} */
+                    provider={PROVIDER_GOOGLE}
+                    userInterfaceStyle='dark'
+                    onPanDrag={() => {}}
                     onPress={(e) => {
+                        const { latitude, longitude } = e.nativeEvent.coordinate;
                         if (turnOnCustom) {
+
                             let customStopID = customStop.length;
-                            if (customStop.length > 0){
-                                customStopID = parseInt(customStop[customStop.length - 1].id.replace('custom', '')) + 1;
-                            }else{
+                            if (customStop.length > 0) {
+                                customStopID =
+                                    parseInt(customStop[customStop.length - 1].id.replace('custom', '')) + 1;
+                            } else {
                                 customStopID = 0;
                             }
+
                             setCustomStop((prev) => [
                                 ...prev,
                                 {
                                     id: 'custom' + customStopID,
                                     name: 'Custom' + customStopID,
-                                    latitude: e.nativeEvent.coordinate.latitude,
-                                    longitude:
-                                        e.nativeEvent.coordinate.longitude,
+                                    latitude,
+                                    longitude,
                                     type: 'custom',
                                 },
                             ]);
+
                             setTurnOnCustom(false);
+                        } else {
+                            setSelectedPOI(null);
                         }
-                    }}
+                        }}
+                    onPoiClick={
+                        (e) => {
+                            console.log(e.nativeEvent.coordinate)
+                        }
+                    }
                 >
-                    {!turnOnCustom &&
+                    {
                         POIS.map((poi) => (
                             <Marker
                                 key={poi.id}
@@ -139,22 +163,77 @@ export default function OverlapMap({ navigation }) {
                                     longitude: poi.longitude,
                                 }}
                                 title={poi.name}
-                                onPress={() => togglePOI(poi)}
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    togglePOI(poi)
+                                }}
                             ></Marker>
                         ))}
-                    {!turnOnCustom &&
-                        customStop?.length > 0 &&
+                    {
                         customStop.map((stop) => (
                             <Marker
+                                draggable
                                 key={stop.id}
                                 coordinate={{
                                     latitude: stop.latitude,
                                     longitude: stop.longitude,
                                 }}
                                 title={stop.name}
-                                onPress={() => togglePOI(stop)}
-                            ></Marker>
+                                onPress={(e) => {
+                                    togglePOI(stop);
+                                    e.stopPropagation();
+                                }}
+                                onDragStart={() => {
+                                    setNeedsRecalculate(true);
+                                }}
+                                onDragEnd={(e) => {
+                                    const { latitude, longitude } = e.nativeEvent.coordinate;
+
+                                    setCustomStop((prev) =>
+                                        prev.map((s) =>
+                                            s.id === stop.id
+                                                ? {
+                                                    ...s,
+                                                    latitude,
+                                                    longitude,
+                                                }
+                                                : s
+                                        )
+                                    );
+
+                                    setStops((prev) =>
+                                        prev.map((s) =>
+                                            s.id === stop.id
+                                                ? {
+                                                    ...s,
+                                                    latitude,
+                                                    longitude,
+                                                }
+                                                : s
+                                        )
+                                    );
+
+                                    e.stopPropagation();
+                                    setNeedsRecalculate(false);
+                                }}
+                            />
                         ))}
+
+
+{/*                         {
+                            stops.length >= 2 && !needsRecalculate && (
+                                 <MapViewDirections
+                                origin={stops[0]}
+                                waypoints={stops.slice(1, stops.length - 1)}
+                                strokeColor="blue"
+                                strokeWidth={6}
+                                destination={stops[stops.length - 1]}
+                                apikey={EXPO_PUBLIC_API_GOOGLE_MAPS}
+                                mode='WALKING'
+                                resetOnChange={true}
+                            />
+                            )
+                        } */}
                 </MapView>
             )}
             {/* Top Section - Search and Filters */}
@@ -164,18 +243,18 @@ export default function OverlapMap({ navigation }) {
                     top: 0,
                     left: 0,
                     right: 0,
-                    paddingTop: 48,
+                    paddingTop: 16,
                     paddingHorizontal: 16,
                     paddingBottom: 16,
                 }}
             >
-                <View className="bg-white/70 rounded-2xl p-4 mb-3 shadow-lg border border-gray-200/50">
+                <View className="bg-gray-400/80 rounded-2xl p-4 mb-3 shadow-lg border border-gray-200/50">
                     <View className="flex-row items-center justify-between mb-3">
-                        <Text className="text-2xl font-semibold mb-3 text-gray-900">
+                        <Text className="text-2xl font-semibold mb-3 text-white">
                             Where to?
                         </Text>
                         <View className="flex-row items-center gap-2">
-                            <Text className="text-sm">Custom Stop</Text>
+                            <Text className="text-sm text-white">Custom Stop</Text>
                             <Switch
                                 trackColor={{
                                     false: '#767577',
